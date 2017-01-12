@@ -1,47 +1,91 @@
 <?php
 
+namespace Jundar;
+
 /**
-* Loads a simple PSR-4 autoloader for the Validator.
+* A simple PSR-4 compatible Autoloader.
+* @todo Verify that this class is indeed PSR-4 compliant.
 */
-spl_autoload_register(function(string $className){
-	//A mapping of namespace prefixes to base directories.
-	$prefixes = [
-		'Validator' => 'src\\Validator',
-	];
+class Autoloader
+{
+	/**
+	* @var array $prefixes A mapping of namespace prefixes to base directories.
+	*/
+	protected $prefixes = [];
 
-	//Get list of namespaces, and unqualified class name
-	$namespaces = explode('\\', $className);
-	$class = array_pop($namespaces);
-
-	//Find the longest prefix to use as the base path
-	$basePath = "";
-	$pathParts = [];
-	while(count($namespaces))
+	/**
+	* Adds a prefix.
+	* @param string $prefix The namespace prefix
+	* @param string $dir The base directory for the prefix
+	*/
+	public function addPrefix(string $prefix, string $dir)
 	{
-		$prefixStr = implode('\\', $namespaces);
-		if(isset($prefixes[$prefixStr]))
-		{
-			$basePath = $prefixes[$prefixStr];
-			break;
-		}
-
-		else
-		{
-			array_unshift($pathParts, array_pop($namespaces));
-		}
+		$this->prefixes[$prefix] = $dir;
 	}
 
-	//Found
-	if($basePath != "")
+	/**
+	* Determines if a prefix exists
+	* @param string $prefix
+	* @return bool
+	*/
+	public function prefixExists(string $prefix): bool
 	{
-		array_unshift($pathParts, $basePath);
-		array_push($pathParts, $class . '.php');
-		$file = implode(DIRECTORY_SEPARATOR, $pathParts);
-		if(file_exists($file))
+		return isset($this->prefixes[$prefix]);
+	}
+
+	/**
+	* Registers the autoloader with SPL.
+	*/
+	public function register()
+	{
+		spl_autoload_register([$this, 'loadClass']);
+	}
+
+	/**
+	* Loads a class based on its fully qualified name.
+	* @param string $className The name of the class
+	*/
+	public function loadClass(string $className)
+	{
+		//Get list of namespaces, and unqualified class name
+		$namespaces = explode('\\', $className);
+		$class = array_pop($namespaces);
+
+		//Find the longest prefix to use as the base path
+		$basePath = "";
+		$pathParts = [];
+		while(count($namespaces))
 		{
-			require $file;
+			$prefixStr = implode('\\', $namespaces);
+			if(isset($this->prefixes[$prefixStr]))
+			{
+				$basePath = $this->prefixes[$prefixStr];
+				break;
+			}
+
+			else
+			{
+				array_unshift($pathParts, array_pop($namespaces));
+			}
+		}
+
+		//Found
+		if($basePath != "")
+		{
+			array_unshift($pathParts, $basePath);
+			array_push($pathParts, $class . '.php');
+			$file = implode(DIRECTORY_SEPARATOR, $pathParts);
+			if(file_exists($file))
+			{
+				require $file;
+			}
+
+			else
+			{
+				print "Could not find: $file\n";
+			}
 		}
 	}
-});
+}
 
 ?>
