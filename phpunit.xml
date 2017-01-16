@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <phpunit
-    bootstrap="./src/Autoload.php"
+    bootstrap="./src/Autoloader.php"
     colors="false">
     <testsuites>
         <testsuite name="Autoloader Test Suite">

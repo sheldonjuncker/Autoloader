@@ -20,7 +20,21 @@ class Autoloader
 	*/
 	public function addPrefix(string $prefix, string $dir)
 	{
-		$this->prefixes[$prefix] = $dir;
+		$current = $this->prefixes[$prefix] ?? [];
+		$this->prefixes[$prefix] = array_merge($current, [$dir]);
+	}
+
+	/**
+	* Adds an array of prefixes for a single base directory.
+	* @param string $prefix
+	* @param array $dirs
+	*/
+	public function addPrefixes(string $prefix, array $dirs)
+	{
+		foreach($dirs as $dir)
+		{
+			$this->addPrefix($prefix, $dir);
+		}
 	}
 
 	/**
@@ -52,14 +66,14 @@ class Autoloader
 		$class = array_pop($namespaces);
 
 		//Find the longest prefix to use as the base path
-		$basePath = "";
+		$basePaths = [];
 		$pathParts = [];
 		while(count($namespaces))
 		{
 			$prefixStr = implode('\\', $namespaces);
 			if(isset($this->prefixes[$prefixStr]))
 			{
-				$basePath = $this->prefixes[$prefixStr];
+				$basePaths = $this->prefixes[$prefixStr];
 				break;
 			}
 
@@ -70,19 +84,22 @@ class Autoloader
 		}
 
 		//Found
-		if($basePath != "")
+		if($basePaths != [])
 		{
-			array_unshift($pathParts, $basePath);
-			array_push($pathParts, $class . '.php');
-			$file = implode(DIRECTORY_SEPARATOR, $pathParts);
-			if(file_exists($file))
+			foreach($basePaths as $basePath)
 			{
-				require $file;
-			}
+				$fileParts = array_merge([$basePath], $pathParts, [$class . '.php']);
+				$file = implode(DIRECTORY_SEPARATOR, $fileParts);
+				if(file_exists($file))
+				{
+					require $file;
+					break;
+				}
 
-			else
-			{
-				print "Could not find: $file\n";
+				else
+				{
+					print "Could not find: $file\n";
+				}
 			}
 		}
 	}
