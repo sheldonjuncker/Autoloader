@@ -95,11 +95,6 @@ class Autoloader
 					require $file;
 					break;
 				}
-
-				else
-				{
-					print "Could not find: $file\n";
-				}
 			}
 		}
 	}
